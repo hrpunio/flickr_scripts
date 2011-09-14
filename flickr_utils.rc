@@ -1,0 +1,66 @@
+# Various utilities required by flickr_* script
+#==================================================================
+use XML::Simple;
+
+sub get_mylocation_base {
+   my $locations_base = shift;
+
+   my $lbase = new XML::Simple ( );
+   my $lb = $lbase->XMLin($locations_base,
+     keyattr => { wpt => 'identifier' }, forcearray=>['wpt']);
+
+   my $wptList = $lb->{wpt};
+
+   foreach $l (keys %{$wptList}) {
+     my $loc = $wptList->{$l};
+     if (! $loc->{acc} ) { $loc->{acc} = -1 }
+     ##print $l, " => ", $loc->{lat}, " x ", $loc->{lon}, "\n"; ##
+     $gc{ $l } = [$loc->{lat}, $loc->{lon}, $loc->{acc} ];
+   }	
+   return %gc ;
+}
+
+# ==============
+sub get_pools_ids { 
+   my $pools_info="$ENV{HOME}/.flickr/$my_flickr_name.groups"; 
+   my %pools_ids;
+   my $p;
+
+   $xmlp = new XML::Simple ();
+
+   my $xm = $xmlp->XMLin($pools_info, keyattr =>[]);
+   my $psl = $xm->{group};
+
+   foreach $p (@{$psl}) { $pools_ids{$p->{local_id}}=$p->{id}; }
+   return %pools_ids;
+}
+
+# ==============
+sub get_sets_ids { 
+   my $sets_info="$ENV{HOME}/.flickr/$my_flickr_name.sets"; 
+   my %set_ids;
+   my $s;
+
+   $xmlp = new XML::Simple ();
+
+   my $xm = $xmlp->XMLin($sets_info, keyattr =>[]);
+   my $psl = $xm->{photoset};
+
+   foreach $s (@{$psl}) {
+    #print "Set # $s->{local_id} id: $s->{id} title: $s->{title} [$s->{photos}]\n";
+    $set_ids{$s->{local_id}}=$s->{id};
+   }
+   return %set_ids;
+}
+
+
+#sub  
+#
+#my $method = 'flickr.people.findByUsername'; 
+#
+#$url = "http://www.flickr.com/services/rest/?method=$method&api_key=$api_key&username=$username"; 
+#$xml = get $url; 
+#print $xml;
+#
+
+1;

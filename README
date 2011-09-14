@@ -1,0 +1,83 @@
+Installation: My-flickr-upld.el
+-------------------------------
+
+[1]
+Add  flickr_xload.pl, flickr_upld.pl, flickr_getsets.pl, flickr_getalltags.pl, 
+  flickr_getgroups.pl, flickr_xml2el.pl 
+to your site_perl directory
+
+Modify flickr_upld.pl if directory containing flickr_xload.pl differs:
+my $perl_site_dir = '/usr/local/lib/perl5/site_perl';
+
+[2]
+Initialize the tags/sets/pools databases. For that purpose one can 
+adapt the following bash script:
+
+#!/bin/bash
+echo "Refreshing information on tags/sets/geolocs/pools"
+
+perl flickr_getsets && perl flickr_getalltags && perl flickr_getgroups && \
+perl flickr_xml2el > ~/.flickr/hr.icio.el 
+#--
+
+[3]
+Copy script photo_thumb.sh (used to generate thumbnails)
+to /usr/local/bin or similar directory (directory where your
+system looks for executables) ; 
+
+Modify My-flickr-upld.el if directory containing flickr_upld.pl  differs:
+(setq perl-prog-name "/usr/local/lib/perl5/site_perl/flickr_upld.pl --script")
+
+Copy My-flickr-upld.el to your site-lisp directory. Add the following
+to .emacs file:
+
+(autoload 'My-flickr-images-init "My-flickr-upld"
+  "Mode for describing/uploading photos" t )
+(autoload 'My-flickr-images-edit "My-flickr-upld"
+  "Mode for describing/uploading photos" t )
+
+[4] 
+Copy photos to some directory. Run My-flickr-images-init and when prompted for directory 
+name provide one with your photos. The buffer flickr-list.dir will be created.
+Add descriptions to photos and save the buffer.
+Run My-flickr-buffer-upload command to upload photos.
+
+
+The installation instructions of My-flickr-upld.el end here. The rest of
+this files describes installation of other (unrelated to My-flickr-upld.el) stuff...
+
+==============================================================================
+
+Installation:  flick-graph-views.pl, flick-report-views.pl, flick-store-manip.pl and
+flick-store-views.pl:
+--------------------
+
+The scripts stores/aggregates/displays information on view counts on individual photos.
+
+*** Note 9/2008: NO LONGER WORKS AS LOGIN PROCEDURE WAS CHANGEG at Flickr.com ***
+
+flick-store-views.pl:
+ This script login to www.flickr.com with $my_login/$my_passwd and downloads
+ photostream (main) pages from user's album the pages are scanned for the information 
+ regarding page view counts. The information is saved in the database.
+ (cf. the script comments for more information)
+
+flick-report-views.pl:
+ Print some usage stats for individual pages at flickr.com. The database created by
+ flick-store-views.pl script is used.
+
+flick-graph-views.pl:
+ Generate line graph of total views/photos viewed for individual pages
+ The database created by flick-store-views.pl script is used.
+
+flick-store-manip.pl
+ Manipulate the database created by flick-store-views.pl script.
+
+To install flick-store-views.pl Perl HTTP::Request::Common, LWP::UserAgent and
+Storable modules are required. 
+Additionaly flick-graph-views.pl requites GD::Graph::lines
+
+To install add the scripts to your site_perl directory.
+
+==============================================================================
+t.przechlewski, 12.12.2007

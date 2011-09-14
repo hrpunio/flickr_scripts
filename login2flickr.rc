@@ -1,0 +1,29 @@
+# --perl--
+# Authorise to flickr
+# this file should be `required' into main script
+# This is working copy of the: /usr/lib/perl5/site_perl/login2flickr.rc
+#
+$FLICKRCFG = "$ENV{HOME}/.flickr";
+
+use lib "$ENV{HOME}/.flickr"; ##
+
+if( open CONFIG, "< $FLICKRCFG/flickrrc" ) {
+   while( <CONFIG> ) {
+     chomp;
+     s/#.*$//;       # strip comments
+
+     next unless m/^\s*([a-z_]+)=(.+)\s*$/io;
+
+     if( $1 eq "api_key" )            { $api_key = $2;       }
+       elsif( $1 eq "shared_secret" ) { $shared_secret = $2; }
+       elsif( $1 eq "auth_token" )    { $auth_token = $2;    }
+       elsif( $1 eq "my_flickr_id" )  { $my_flickr_id = $2;  }
+       elsif( $1 eq "my_flickr_name" ) { $my_flickr_name = $2;  }
+     }
+   close CONFIG;
+}
+
+#if ($verbose) { print STDERR "Authenticate with: Key: $api_key Secret: $shared_secret" 
+# . " Token: $auth_token\n"; }
+
+1;

@@ -1,0 +1,387 @@
+<?xml version='1.0' encoding='iso-8859-2'?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+   "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head>
+
+ <meta http-equiv="content-type" content="text/html; charset=iso-8859-2"/>
+ <meta name="DC.creator" content="Tomasz Przechlewski" />
+ <meta name='DC.date' content='2007-07-28T16:38:49CEST'/>
+ <meta name='DC.rights' content='(c) Tomasz Przechlewski'/>
+
+<!-- default styles: -->
+<link rel="stylesheet" type="text/css" href="/style/tp-base.css" title='ES'/>
+<link rel="alternate stylesheet" type="text/css" href="/style/tp-bw.css" title='NS'/>
+<link rel="alternate stylesheet" type="text/css" href="/style/tp-big.css" title='BS'/>
+<script type="text/javascript" src="/script/tp.js" ></script>
+<!-- styles end  -->
+
+<title>Uploading photos to www.flickr.com with Perl and Emacs</title>
+</head>
+<body xml:lang="en">
+
+<p class='warning'>This is a mock version. Needs more editing.</p>
+
+<h2 class='main'>Uploading photos to www.flickr.com with Perl and Emacs
+<a class='flushright' href="./opis_new.html">
+ <img longdesc="[[pl-f.gif" src="/icons_/pl-f.gif" alt="PL"/></a>
+</h2>
+
+<h3>Introduction</h3>
+
+<p>Describing and managing large number of photos on
+<code>flickr.com</code> can be tedious.  Addings tags, sending 
+photos to
+group pools and/or sets after uploading them to
+<code>flickr.com</code> with native web-based interface is quite time
+consuming and IMHO pretty impractical.
+This note describes how my photos are uploaded and described
+(ie. tags, sets and pools information is provided)
+with Flickr Rest API using Perl scripts and Emacs text editor.
+The way descibed can be thought less intuitive 
+or user friendly -- whatever it means --
+but without any doubts it is much faster.
+</p>
+
+<h3>``Configuration'' files</h3>
+
+<p>
+Photo <em>tags</em> are terms associated with 
+objects depicted (persons, buildings, animals, plants, etc...).
+Moreover I add special ``machine'' tags for geotagging photos
+(see below).
+Photos can belong to many sets and can be send to various
+<em>group pools</em>. 
+<strong>To sum-up: <em>photo description</em> consists
+of tags (including geotags), sets and pools to which the photo
+belongs to. 
+Tags, sets and pools can be defined with appropriate
+Flickr API methods.</strong>
+</p>
+
+<p>
+As concerns geotags, geocoordinates can be obtained automatically
+in case of GPS-enabled camera or when GPS and camera time is synchronized
+(cf. <a href="http://www.carto.net/projects/photoTools/gpsPhoto/">here</a>).
+If the photo is geotagged with appropriate EXIF tags then
+<code>My-flickr-upld</code> will simply use these tags 
+to add geo-description to flickr (cf.
+<a href="./geotagging-photos-with-gpsphoto_en.html">this</a> note).
+</p>
+
+<p>
+However, sometimes GPS unit fails to find satellites or there is no GPS
+at all. In this case, photos can be geo-described ``manually'' using
+one of two ``methods'': 1) by inserting <em>geo-identifier</em> from
+the database <em>or</em> 2) by inserting geo-coordinates 
+using <code>#longitude:latitude</code> syntax.
+First method is based on database of geo-identifiers
+aka labels like
+<code>Sopot#Abrahama28</code> or <code>Gdańsk#Lotnisko</code>. The
+photos are labelled with the nearest geo-identifier from the database. 
+Next the identifiers 
+are translated to latitude/longitude by Perl script during upload.
+</p>
+
+<p>
+Geotags are stored in an XML file with the following structure:
+</p>
+
+<pre>
+&lt;wpts>
+&lt;wpt lat="54.37983" lon="18.28747">
+  &lt;name>Przodkowo&lt;/name>
+  &lt;identifier>Przodkowo#Skrzyżowanie&lt;/identifier>
+&lt;/wpt>
+...
+</pre>
+
+<p>
+The <code>identifier</code> element contains geo-identifier,
+while <code>lat</code> and <code>lon</code> 
+attributes contain it's geo coordinates. 
+The geo-locations base is 
+located in <code>~/.flickr/knows/where.flk</code>.
+</p>
+
+<p>
+The following ``geotags'' are added to my photos:
+<code>geo:longitude=long</code>, <code>geo:latitude=lat</code> and
+<code>geo:loc=label</code> (label always consists of a single word;
+obviously label is added only if geo identifier was provided).  Moreover
+geocoordinates are added to the photo file with the following EXIF
+tags: <code>GPSLongitudeRef</code>, <code>GPSLatitudeRef</code>,
+<code>GPSLatitude</code>, <code>GPSLongitude</code> and
+<code>GPSAreaInformation</code> (<code>GPSAreaInformation</code> is defined 
+only if geo identifier was provided).
+
+</p>
+
+
+<p>
+For other tags the convention to use multi-word concepts 
+is applied, ie.
+<code>"tomasz przechlewski"</code> not 
+<code>tomaszprzechlewski</code> or <code>tomasz_przechlewski</code>.
+Next, all tags use lowercase letters only. 
+The tags database -- in XML
+format too -- is located in <code>~/.flickr/hr.icio.tags</code>. It is
+created/refreshed with  <code>flickr_getalltags.pl</code> script.
+</p>
+
+<p>
+Sets and pools databases are located in
+<code>~/.flickr/hr.icio.sets</code> and
+<code>~/.flickr/hr.icio.groups</code> respectively.  They are
+created/refreshed with with <code>flickr_getgroups.pl</code> and
+<code>flickr_getsets.pl</code> scripts.
+</p>
+
+<p>
+Geo-locations, tags, sets and pools databases are used to add
+descriptions to photos quickly.  To refresh the databases I run the
+following <code>flickr_update_kb</code> bash script from time to time:
+</p>
+
+<pre>
+#!/bin/bash
+echo "Refreshing information on tags/sets/geolocs/pools"
+
+flickr_getsets &amp;&amp; flickr_getalltags &amp;&amp; flickr_getgroups &amp;&amp; \
+flickr_xml2el > ~/.flickr/hr.icio.el 
+</pre>
+
+<p><code>flickr_xml2el.pl</code> script transforms the databases from
+XML to Emacs lisp format and stores 
+the result in <code>hr.icio.el</code> file.  
+It is possible to read XML with Emacs 
+<code>xml.el</code> package but parsing XML this way
+is <strong>extremly</strong> slow.
+Perl is much faster.
+</p>
+
+<p><strong>Warning:</strong> <code>flickr_xml2el.pl</code> and
+<code>flickr_xml2el</code> denotes the same script 
+(<code>flickr_xml2el</code> is a link
+to <code>flickr_xml2el.pl</code>). 
+The same concerns other Perl scripts.
+</p>
+
+<h3 id='upld'>Uploading photos to <code>www.flickr.com</code></h3>
+
+<p>
+To upload photos <code>flickr_xload.pl</code> and
+<code>flickr_upld.pl</code> can be used. For example 
+<code>flickr_xload.pl</code> can be run as follows:
+</p>
+
+<pre>
+flickr_xload --title <em>title</em> --description <em>description</em> --set <em>ids</em> \ 
+  --pool <em>idp</em> --tag <em>tags</em> --gt <em>lon:lat:gid:acc</em> --rotate <em>angle</em> <em>file</em>
+</pre>
+
+<p>
+Where: <code>title</code> is photo title; <code>description</code> is
+photo description; <code>ids</code> denotes 
+a list of comma separated
+local set identifiers (flicker identifiers are 
+pretty long and awkward so while
+downloading <code>flickr_getsets.pl</code> add local identifier 
+to each set
+for esier reference; local set identifier look like s1, s2 etc...); 
+<code>idp</code> denotes a list of comma separated
+local pool identifiers (like local set identifiers but concerns pools); 
+<code>tags</code> dentotes a list of comma separated
+tags (multiword tags should 
+be embraced with <code>"</code>);
+<code>lon:lat:gid:acc</code> means: longitude, latitude 
+(decimal notation should be used), geolocation identifier and
+accuracy code as defined in flickr API
+(cf. <a href="http://www.flickr.com/services/api/flickr.photos.geo.setLocation.html">flickr.photos.geo.setLocation</a>); 
+<code>angle</code> 
+refers to the amount of degrees by which to rotate the photo (clockwise,
+possible values are 90, 180 or 270 degrees,
+cf. <a href="http://www.flickr.com/services/api/flickr.photos.transform.rotate.html">flickr.photos.transform.rotate</a>);
+<code>file</code> denotes the photo file. Example:
+</p>
+<pre>
+flickr_xload --set s8 --tag '"mushrooms" "mushroom picking" "hypholoma"\
+ geo:lon=18.536682 geo:lat=54.442495 geo:loc=Sopot#MałaGwiazda'\
+ --gt '54.442495:18.536682:Sopot#MałaGwiazda:11' dscn3135.jpg
+</pre>
+
+<p>
+The above command will: 1) upload <code>dscn3135.jpg</code> to
+<code>www.flickr.com</code>; 
+2) add the following tags: <em>mushrooms</em>,
+<em>mushroom picking</em> and <em>hypholoma</em>; 
+3) add geotags
+associated with <code>Sopot#MałaGwiazda</code> geolocation (defined in
+<code>~/.flickr/knows/where.flk</code>); 4) add photo to set labelled
+locally as <code>s10</code>.
+</p>
+
+<p>
+As <code>flickr_xload</code> command line syntax is verbose
+there is another Perl script, <code>flickr_upld</code>,  which is a sort of preprocessor
+to <code>flickr_xload</code>. The <code>flickr_upld</code> script
+can be run with 
+<code>--script <em>script</em></code> option, 
+where <code><em>script</em></code> denotes text file containing photo 
+filenames and photo descriptions (one photo per line). 
+It is assumed that <code><em>script</em></code> is edited
+with Emacs using appriopriate mode and <code>flickr_xload</code>
+is run from within Emacs. 
+The format of <code><em>script</em></code> file
+is as follows:
+</p>
+
+<pre>
+dscf2001.jpg >> @g Sopot#Abrahama28 @k krzyś,komputer,jaś @lrot 
+dscf2003.jpg >> @g Sopot#Abrahama28 @k mushroom,flammulina_velutipes @s s1,s14 @p p1
+</pre>
+
+<p>The meaning of <code>@g</code>, <code>@k</code>, <code>@s</code>,
+<code>@p</code>, etc... should be obvious.</p>
+
+<p>If <code>@g</code> switch is followed by an argument starting with 
+<code>#</code> it is assumed the argument is formated as 
+<code>#longitude:latitude</code>. Otherwise it is assumed the argument 
+is geo-identifier and the database of geo-identifiers will be searched for.
+If there is no value after <code>@g</code> switch or no <code>@g</code> at all, 
+it is assumed the photo contains geocoordinates 
+defined as appropriate EXIF tags 
+<em>or</em> it should not be geotagged.
+</p>
+
+<h3>The <code>My-flickr-upld</code> Emacs mode</h3>
+
+<p>Adding tags and other information to photos with
+command line tools is extremly annoying. 
+Describing photos with  <code>My-flickr-upld</code> Emacs mode 
+is much more convinient, cf. screenshots below.
+</p>
+
+<p>
+To start <code>My-flickr-upld</code> copy photos to
+some directory, run <code>My-flickr-images-init</code>
+and when prompted for directory name provide one with your photos.
+The buffer <code>flickr-list.dir</code> will be created
+containg the photos list as shown below. Initially each line
+in the buffer contains photo filename plus 
+empty <code>@g</code>, <code>@k</code> switches.
+The content of <code>flickr-list.dir</code> buffer can be
+edited freely, however one have to obey <code>flickr_upld</code> syntax.
+Moreover some useful facilities are provided
+to describe photos quickly and comfortably.
+</p>
+
+<p>
+<a href="http://www.flickr.com/photos/tprzechlewski/2102377721/" 
+   title="Photo Sharing"><img 
+    src="http://farm3.static.flickr.com/2353/2102377721_646ff76f80.jpg" 
+    height="190"  alt="flickr-1" /></a>
+ <a href="http://www.flickr.com/photos/tprzechlewski/2102377541/" 
+   title="Photo Sharing"><img 
+    src="http://farm3.static.flickr.com/2173/2102377541_15caaefb4c.jpg" 
+    height="190"  alt="flickr-2" /></a>
+ <a href="http://www.flickr.com/photos/tprzechlewski/2153620239/" 
+   title="Photo Sharing"><img 
+    src="http://farm3.static.flickr.com/2325/2153620239_d67d20d8f5.jpg" 
+    height="190"  alt="flickr-2" /></a>
+</p>
+
+
+<p>
+In <code>My-flickr-upld</code> mode the window is split;
+the list of photos is displayed in the upper window 
+while the lower window shows the photo from the line the cursor
+is on. Several useful key combinations are defined:  
+<code>C-c C-c</code> -- copy description from the
+previous line; <code>C-c C-a</code> -- insert local set id; 
+<code>C-c C-p</code> -- insert local pool id;
+<code>C-c C-g</code> -- insert geo location identifier;
+<code>C-c C-t</code> or
+<code>C-c C-k</code> -- insert tag.  
+Insertion of tags, sets and pools can be done
+with completion (cf. screenshots below) based on the contents of 
+<code>.tags</code>, <code>.sets</code>,
+<code>.groups</code>
+and <code>where.flk</code> files (described above).
+</p>
+
+<p>
+To easily distinguish geotagged photo (ie. photo with appriopriate
+EXIF tags defined) its thumbnail is marked with red rectangle in
+upper-left corner.
+</p>
+
+
+<p>
+<a href="http://www.flickr.com/photos/tprzechlewski/2103157676/" 
+   title="Photo Sharing"><img 
+   src="http://farm3.static.flickr.com/2073/2103157676_8512785ec5.jpg" 
+   height="190" alt="flickr-3" /></a>
+ <a href="http://www.flickr.com/photos/tprzechlewski/2103157844/" 
+    title="Photo Sharing"><img 
+    src="http://farm3.static.flickr.com/2113/2103157844_e4486f8fd4.jpg" 
+    height="190" alt="flickr-4" /></a>
+<a href="http://www.flickr.com/photos/tprzechlewski/2154414434/"
+    title="Photo Sharing"><img 
+    src="http://farm3.static.flickr.com/2048/2154414434_d72a4997c9.jpg" 
+    height="190" alt="flickr-4" /></a>
+</p>
+
+<p>When photo descriptions are completed, the buffer
+should be saved and then 
+<code>My-flickr-buffer-upload</code> command should
+be run. The photos are uploaded from within Emacs.
+If you like to upload them from the
+command line then swich to the terminal, change directory to
+one containg <code>flickr-list.dir</code> file and run: 
+</p>
+
+<pre>perl flickr_upld.pl -script flickr-list.dir
+</pre>
+
+<h3>Download</h3>
+
+<p>The Perl scrips and Emacs package
+described above are available <a href="./scripts">here</a>.
+Consult README file for installation hints.
+</p>
+
+<p>The scripts are based
+on modules <a href="http://search.cpan.org/~cpb/Flickr-Upload/">Flickr-Upload-1.22</a>
+and <a href="http://search.cpan.org/~iamcal/Flickr-API/">Flickr-API-0.08</a>.
+The package <code>My-flickr-upld.el</code> uses
+<code>image-file.el</code> and some fragments/ideas
+from Norman Walsh's <code>show-images.el</code> (distributed
+with  
+<a href="http://sourceforge.net/projects/jpegrdf">jpegrdf</a>
+package).
+</p>
+
+<!-- ;;; -->
+
+<p>
+<a href="../../Proj.html#perl"><img
+ longdesc="[[back.png" src="/icons_/back.png" alt="Back"/>Back</a>
+</p>
+
+</body>
+</html>
+<!--
+Local variables:
+ mode: nxml
+ sgml-always-quote-attributes:t
+ sgml-indent-step:0
+ sgml-indent-data:nil
+ time-stamp-start:"\\(ostatnia zmiana\\|last modified\\):[ 	]+\\\\?[\"<]+"
+ time-stamp-line-limit:0
+ LocalWords: Przechlewski geotagowanie GPS tagi geotagi Emacs
+ LocalWords: GPSLongitudeRef GPSLatitudeRef GPSLatitude GPSLongitude GPSAreaInformation
+ ispell-local-dictionary: "polish"
+End:
+-->

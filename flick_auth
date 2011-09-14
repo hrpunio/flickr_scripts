@@ -1,0 +1,16 @@
+# --perl--
+# Authorise to flickr
+# this file should be `required' into main script
+if( open CONFIG, "< $ENV{HOME}/.flickrrc" ) {
+   while( <CONFIG> ) {
+     chomp;
+     s/#.*$//;       # strip comments
+
+     next unless m/^\s*([a-z_]+)=(.+)\s*$/io;
+
+     if( $1 eq "api_key" ) { $api_key = $2; }
+       elsif( $1 eq "shared_secret" ) { $shared_secret = $2; }
+     }
+   close CONFIG;
+}
+#

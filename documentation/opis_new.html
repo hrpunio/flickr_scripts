@@ -1,0 +1,424 @@
+<?xml version='1.0' encoding='iso-8859-2'?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+   "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head>
+
+ <meta http-equiv="content-type" content="text/html; charset=iso-8859-2"/>
+ <meta name="DC.creator" content="Tomasz Przechlewski" />
+ <meta name='DC.date' content='2010-06-16T07:55:29CEST'/>
+ <meta name='DC.rights' content='(c) Tomasz Przechlewski'/>
+
+<!-- default styles: -->
+<link rel="stylesheet" type="text/css" href="/style/tp-base.css" title='ES'/>
+<link rel="alternate stylesheet" type="text/css" href="/style/tp-bw.css" title='NS'/>
+<link rel="alternate stylesheet" type="text/css" href="/style/tp-big.css" title='BS'/>
+<script type="text/javascript" src="/script/tp.js" ></script>
+<!-- styles end  -->
+
+<title>Obsługa www.flickr.com</title>
+</head>
+<body xml:lang="pl">
+
+<h2 class='main'>Dodawanie zdjęć na <code>flickr.com</code> w trybie <code>My-flickr-upld</code>
+<a class='flushright' href="./opis_new_en.html">
+ <img longdesc="[[uk-f.gif" src="/icons_/uk-f.gif" alt="UK"/></a>
+</h2>
+
+<h3>Wprowadzenie</h3>
+
+<p>Opisywanie zdjęć na <code>flickr.com</code> jest czasochłonne
+jeżeli zdjęć jest dużo. Robienie tego <strong>po</strong> ich
+umieszczeniu na stronie za pomocą tzw. <em>niezwykle-wygodnego-interfejsu</em>
+praktycznie nie wchodzi w grę. Poniżej opisałem w jaki sposób dodaję
+swoje zdjęcia na <code>flickr.com</code>. 
+Sposób ten jest zapewne dużo
+mniej intuicyjny -- cokolwiek to oznacza -- ale niewątpliwie dużo
+szybszy.
+</p>
+
+<h3>Pliki ,,konfiguracyjne''</h3>
+
+<p>
+Opis zdjęcia (tagi) mają zawierać współrzędne geograficzne oraz nazwy
+ważniejszych obiektów na zdjęciu (osoby, budowle itp...)  Zdjęcia są
+podzielone na zbiory (<em>set</em>), opis ma też zawierać informację
+do jakich zbiorów dodano zdjęcie oraz do jakich grup zdjęcie 
+ma być wysłane (<em>group pools</em>). 
+<strong>Reasumując opis zdjęcia to:
+geotagi (współrzędne geograficzne oraz nazwa miejsca), 
+tagi (pozostałe), 
+zbiory i pule grup (<em>group pools</em></strong>).
+Tagi, zbiory i pule są definiowane za pomocą odpowiednich 
+metod z API flickra.
+</p>
+
+<p>
+Jeżeli chodzi o geotagi, to najprościej jest pobierać odpowiednie
+wartości z GPSa a następnie dodawać geotagi w sposób opisany 
+np. <a href="http://www.carto.net/projects/photoTools/gpsPhoto/">tutaj</a>.
+(Por. też mój krótki 
+<a href="./geotagging-photos-with-gpsphoto.html">tekst</a> jak to zrobić)
+Jeżeli zdjęcia zawierają geotagi, to sprawa jest z punktu
+widzenie trybu <code>My-flickr-upld</code> załatwiona.
+</p>
+
+<p>
+Czasami jednak GPS zawiedzie albo go nie ma, wtedy można dodać współrzędne 
+,,ręcznie''. Można to zrobić na dwa sposoby: 
+poprzez wstawienie identyfikatora miejsca z bazy <em>lub</em>
+poprzez dodanie współrzędnych w konwencji <code>#długość:szerokość</code>.
+Pierwszy z wyżej wymienionych sposobów korzysta
+z bazy identyfikatorów typu <code>Sopot#Abrahama28</code>
+czy <code>Gdańsk#Lotnisko</code>, którymi należy się posługiwać podczas
+opisywania zdjęć.  
+Baza identyfikatorów geograficznych (geotagi) jest plikiem XML 
+o następującym formacie:
+</p>
+
+<pre>
+&lt;wpts>
+&lt;wpt lat="54.37983" lon="18.28747">
+  &lt;name>Przodkowo&lt;/name>
+  &lt;identifier>Przodkowo#Skrzyżowanie&lt;/identifier>
+&lt;/wpt>
+...
+</pre>
+
+<p>
+Gdzie element <code>identifier</code> zawiera identyfikator miejsca,
+a atrybuty <code>lat</code> i <code>lon</code> jego współrzędne
+geograficzne. Baza ta znajduje się w pliku:
+<code>~/.flickr/knows/where.flk</code>.
+</p>
+
+<p>Informacja o współrzędnych geograficznych jest
+dodawana zarówno do pliku ze zdjęciem (w postaci odpowiednich tagów EXIF),
+jak i do opisu zdjęcia na stronie flickra (za pomocą specyficznych tagów 
+rozpoczynających się od <code>geo:</code>). Mówiąc bardziej konkretnie,
+do opisu zdjęcia zostaną dodane następujące tagi: 
+<code>geo:longitude=długość</code>,
+<code>geo:latitude=szerokość</code> oraz 
+<code>geo:loc=nazwa</code>
+(<code>geo:loc</code> tylko w wypadku posługiwania się
+identyfikatorami miejsc; nazwa jest zawsze jednowyrazowa).  
+Do pliku ze zdjęciem zostaną wstawione odpowiednie wartości
+następujących pól EXIF:
+<code>GPSLongitudeRef</code>, 
+<code>GPSLatitudeRef</code>, 
+<code>GPSLatitude</code>, 
+<code>GPSLongitude</code> oraz
+<code>GPSAreaInformation</code> (to ostatnie tylko wtedy gdy posługujemy
+się identyfikatorem miejsca.)
+</p>
+
+<p>
+Dla pozostałych tagów stosuję konwencję (od jakiegoś czasu) wstawiania
+pojęć wielowyrazowych, a nie tworzenia jednowyrazowych dziwolągów,
+tj. <code>"tomasz przechlewski"</code> a nie
+<code>tomaszprzechlewski</code> czy <code>tomasz_przechlewski</code>.
+Aha, wszystkie tagi piszę małymi literami. Baza tagów -- także 
+w formacie XML -- znajduje się w pliku
+<code>~/.flickr/hr.icio.tags</code> i jest zakładana/odświeżana za
+pomocą skryptu <code>flickr_getalltags.pl</code>, który ściąga wszystkie
+do tej pory zdefiniowane przez mnie tagi z flickr.com.
+</p>
+
+<p>
+Bazy zbiorów i puli znajdują się odpowiednio w plikach
+<code>~/.flickr/hr.icio.sets</code> oraz 
+<code>~/.flickr/hr.icio.groups</code>
+i są zakładane/odświeżane za
+pomocą skryptów <code>flickr_getgroups.pl</code> 
+oraz <code>flickr_getsets.pl</code> pobierających odpowiednie
+informacje z flickr.com.
+</p>
+
+<p>
+Bazy identyfikatorów miejsc, tagów, zbiorów i puli są potrzebne
+do szybkiego dodawania opisów do zdjęć. 
+Do odświeżania zawartości tych
+plików od czasu do czasu 
+uruchamiam skrypt <code>flickr_update_kb</code>:
+</p>
+
+<pre>
+#!/bin/bash
+echo "Refreshing information on tags/sets/geolocs/pools"
+
+flickr_getsets &amp;&amp; flickr_getalltags &amp;&amp; flickr_getgroups &amp;&amp; \
+flickr_xml2el > ~/.flickr/hr.icio.el 
+</pre>
+
+<p>Skrypt <code>flickr_xml2el.pl</code> zamienienia pliki
+z informacjami o tagach, pulach, zbiorach i identyfikatorach miejsc
+z formatu XML do postaci Emacs lisp.  Możliwe jest wprawdzie -- za
+pomocą biblioteki <code>xml.el</code> bezpośrednie czytanie plików
+<code>.xml</code> ale jest to przeraźliwie wolne i stąd pomysł na
+zewnętrzne przetwarzanie Perlem.
+</p>
+
+<p><strong>Uwaga:</strong> skrypt <code>flickr_xml2el.pl</code> oraz
+<code>flickr_xml2el</code> to ten sam skrypt (<code>flickr_xml2el</code> jest linkiem
+do <code>flickr_xml2el.pl</code>). 
+Podobnie jest w przypadku innych skryptów perlowych.
+</p>
+
+<h3 id='upld'>Umieszczanie zdjęć na <code>www.flickr.com</code></h3>
+
+<p>
+Do tego służą skrypty <code>flickr_xload.pl</code> oraz
+<code>flickr_upld.pl</code>. Przykładowe uruchomienie
+skryptu <code>flickr_xload.pl</code> wygląda następująco:
+</p>
+
+<pre>
+flickr_xload --title tytuł --description opis --set zbiory 
+  --tag tagi --gt dł:szer:id:dokł --rotate kąt plik
+</pre>
+<p>
+Gdzie: <code>tytuł</code> to tytuł rysunku; <code>opis</code> to opis
+rysunku; <code>zbiory</code> to lista oddzielonych przecinkami
+lokalnych identyfikatorów zbiorów; <code>tagi</code> to oddzielone
+odstępami tagi (tagi wielowyrazowe otocz cudzysłowem <code>"</code>);
+<code>dł:szer:id:dokł</code> to odpowiednio: długość i szerokość
+geograficzna (zapisana w notacji dziesiętnej), identyfikator
+geograficzny oraz umowne oznaczenie dokładności 
+(por. <a href="http://www.flickr.com/services/api/flickr.photos.geo.setLocation.html">flickr.photos.geo.setLocation</a>); 
+<code>kąt</code> spowoduje obrót rysunku o kąt
+(dopuszczalne wartości to 90, 180 lub 270) stopni w kierunku
+przeciwnym do ruchu wskazówek zegara 
+(por. <a href="http://www.flickr.com/services/api/flickr.photos.transform.rotate.html">flickr.photos.transform.rotate</a>);
+<code>plik</code> to nazwa pliku. Przykład:
+</p>
+<pre>
+flickr_xload --set s8 --tag '"mushrooms" "mushroom picking" "Hypholoma"\
+ geo:lon=18.536682 geo:lat=54.442495 geo:loc=Sopot#MałaGwiazda'\
+ --gt '54.442495:18.536682:Sopot#MałaGwiazda:11' dscn3135.jpg
+</pre>
+
+<p>
+Spowoduje dla pliku <code>dscn3135.jpg</code> z bieżącego katalogu: 1)
+wysłanie go na <code>flickr.com</code> oraz 2) dodanie tagów
+<em>mushrooms</em>, <em>mushroom picking</em> i <em>Hypholoma</em>;
+3) dodanie stosownych dla <code>Sopot#MałaGwiazda</code> geotagów (pobranych
+z bazy <code>~/.flickr/knows/where.flk</code>);
+4) dodanie  identyfikatora zbioru(ów), tj. <code>s10</code> w tym przypadku.
+</p>
+
+<p>
+Ponieważ posługiwanie się <code>flickr_xload</code> jest nieporęczne
+z uwagi na skomplikowaną postać argumentów wiersza poleceń, powstał
+skrypt <code>flickr_upld</code>, który jest rodzajem preprocesora do
+<code>flickr_xload</code>. Można go uruchomić z opcją 
+<code>--script plik</code>, gdzie <code>plik</code> zawiera nazwy
+i opisy zdjęć. Zakłada się, że <code>plik</code> jest redagowany
+w odpowiednim trybie edytora Emacs a <code>flickr_xload</code>
+uruchamiany ,,z wnętrza''Emacsa. Format pliku zawierającego nazwy/opisy
+zdjęć jest następujący:
+</p>
+
+<pre>
+dscf2001.jpg >> @g Sopot#Abrahama28 @k krzyś,komputer,jaś @lrot 
+dscf2003.jpg >> @g Sopot#Abrahama28 @k mushroom,flammulina_velutipes @s s1,s14 @p p1
+</pre>
+
+<p>Znaczenie przełączników <code>@g</code>, <code>@k</code>,
+<code>@s</code>, <code>@p</code>, itp., powinno być oczywiste.
+</p>
+
+<p>Uwaga: jeżeli wartość argumentu <code>@g</code> zaczyna się od znaku
+<code>#</code>, to skrypt oczekuje wartości w postaci <code>#długość:szerokość</code>.
+W pozostałych wypadkach będzie traktował argument jako identyfikator
+miejsca i szukał go w bazie identyfikatorów. Brak <code>@g</code> lub
+pusta wartość tej opcji zakłada, że albo zdjęcie zawiera współrzędne
+w odpowiednich polach EXIF albo nie ma być geotagowane.
+</p>
+
+<h3>Tryb <code>My-flickr-upld</code> w Emacsie</h3>
+
+<p>Posługując się wierszem poleceń albo prostym edytorem 
+sprawne opisanie plików ze zdjęciami jest ciężkie. 
+Żeby to robić sensownie trzeba
+widzieć każde zdjęcie. Do tego celu służy tryb
+<code>My-flickr-upld.el</code> dla Emacs.  Pozwala oznakować zdjęcia
+w trybie interaktywnym. Por. rysunek poniżej.
+</p>
+
+<p>Należy rozpocząć od skopiowania zdjęć do jakiegoś katalogu.
+Teraz uruchamiamy Emacsa 
+a następnie wykonujemy polecenie <code>My-flickr-images-init</code>. 
+W odpowiedzi na wyświetlone w minibuforze zapytanie
+o nazwę katalogu należy podać ten, w którym są skopiowane uprzednio zdjęcia.
+Emacs stworzy bufor <code>flickr-list.dir</code> zawierający
+zestawienie zdjęć pokazane na rysunku poniżej. 
+Początkowo każdy wiersz zestawienia będzie zawierał tylko
+nazwę pliki ze zdjęciem plus ,,puste'' przełączniki <code>@g</code>, <code>@k</code>.
+Zawartość bufora  <code>flickr-list.dir</code> może być edytowana swobodnie.
+Obowiązuje w nim składnia skryptu <code>flickr_upld</code>.
+Dodatkowo zostało zdefiniowanych kilka ułatwień przyśpieszających pracę.
+</p>
+
+<p>
+<a href="http://www.flickr.com/photos/tprzechlewski/2102377721/" 
+   title="Photo Sharing"><img 
+    src="http://farm3.static.flickr.com/2353/2102377721_646ff76f80.jpg" 
+    height="190"  alt="flickr-1" /></a>
+ <a href="http://www.flickr.com/photos/tprzechlewski/2102377541/" 
+   title="Photo Sharing"><img 
+    src="http://farm3.static.flickr.com/2173/2102377541_15caaefb4c.jpg" 
+    height="190"  alt="flickr-2" /></a>
+ <a href="http://www.flickr.com/photos/tprzechlewski/2153620239/" 
+   title="Photo Sharing"><img 
+    src="http://farm3.static.flickr.com/2325/2153620239_d67d20d8f5.jpg" 
+    height="190"  alt="flickr-2" /></a>
+</p>
+
+<p>
+W trybie <code>My-flickr-upld</code> ekran jest dzielony na pół, w górnym oknie jest
+wyświetlana lista plików (jeden wiersz = jeden plik). 
+W dolnym oknie wyświetlany jest plik z wiersza,
+w którym jest kursor.  Zdefiniowano ponadto kilka pomocnych skrótów
+klawiszowych: <code>C-c C-c</code> -- kopiowanie opisu z poprzedniego
+wiersza <code>C-c C-a</code> -- wstawienie nazwy zbioru 
+<code>C-c C-g</code> -- wstawienie
+identyfikatora geo <code>C-c C-t</code> albo 
+<code>C-c C-k</code> -- wstawienie taga.
+Polecenia wstawiające zbiory i tagi działają w oparciu o bazy
+<code>~/.flickr/nazwa.tags</code>,  
+<code>~/.flickr/nazwa.sets</code>
+oraz <code>~/.flickr/knows/where.flk</code> i dzięki temu pozwalają
+na uzupełnianie
+nazw (<em>completion</em>, por. rys. poniżej).  Aby polecenia działały prawidłowo
+trzeba co jakiś czas odświeżać bazy zbiorów/tagów używając poleceń:
+<code>flickr_getalltags.pl</code>,
+<code>flickr_getgroups.pl</code> 
+i <code>flickr_getsets.pl</code>.
+</p>
+
+<p>
+Aby odróżnić zdjęcia zawierające zdefiniowane tagi EXIF ze współrzędnymi  
+geograficznymi od tych, które tej informacji nie zawierają, generowana miniatura
+zdjęcia zawiera czerwony prostokąt w lewym górnym rogu (jeżeli zdjęcie jest
+już geotagowane).
+</p>
+
+<p>
+<a href="http://www.flickr.com/photos/tprzechlewski/2103157676/" 
+   title="Photo Sharing"><img 
+   src="http://farm3.static.flickr.com/2073/2103157676_8512785ec5.jpg" 
+   height="190" alt="flickr-3" /></a>
+ <a href="http://www.flickr.com/photos/tprzechlewski/2103157844/" 
+    title="Photo Sharing"><img 
+    src="http://farm3.static.flickr.com/2113/2103157844_e4486f8fd4.jpg" 
+    height="190" alt="flickr-4" /></a>
+<a href="http://www.flickr.com/photos/tprzechlewski/2154414434/"
+    title="Photo Sharing"><img 
+    src="http://farm3.static.flickr.com/2048/2154414434_d72a4997c9.jpg" 
+    height="190" alt="flickr-4" /></a>
+</p>
+
+<p>Po dodaniu opisów bufor należy zapisać na dysk a następnie
+uruchomić polecenie <code>My-flickr-buffer-upload</code>, które
+wyśle zdjęcia na flickr.com. Można też oczywiście osiągnąć to samo
+wpisując w wierszu 
+poleceń, w katalogu w którym znajdują się zdjęcia: 
+</p>
+
+<pre>perl flickr_upld.pl -script flickr-list.dir
+</pre>
+
+<h3>Różne użyteczne informacje nt. flickr.com</h3>
+
+<p>
+Odsyłacze do zdjęć na flickr.com są tworzone według pewnego schematu.
+Strona główna zdjęcia ma adres <code>http://www.flickr.com/tprzechlewski/&lt;photo_id>/&lt;/photo_id></code>, gdzie
+<code>&lt;photo_id></code> oznacza identyfikator zdjęcia. 
+Plik ze zdjęciem ma zaś następujący URL:
+</p>
+
+<pre>
+http://static.flickr.com/&lt;server>/&lt;photo_id>_&lt;secret>_&lt;size>.jpg
+</pre>
+
+<p>
+Wartości <code>&lt;server></code> oraz <code>&lt;secret></code> można
+ustalić np. poprzez wykonanie metody
+<code>flickr.people.getPublicPhotos</code>.  Wartościami size są
+<code>s</code> (square), <code>t</code> (thumbnail), <code>m</code>
+(small), <code>b</code> (large), <code>o</code> (original).  Oznaczają
+one odpowiednio pliki o wielkościach 75, 100, 200, 1024 pikseli
+i wielkość oryginalną. Rysunek typu <em>square</em> to kwadrat,
+pozostałe to prostokąty o dłuższym boku równym podanej licznie
+pikseli. Prostokąt o dłuższym boku równym 500 pikseli to wielkość
+zdjęcia, która jest wyświetlana na stronie głównej zdjęcia.  Ta
+wielkość jest wybierana jeżeli URL nie zawiera części <code>_&lt;size></code>.
+</p>
+
+<p>Aby wyświetlić stronę ze zdjęciem o podanym id należy użyć
+adresu URL zgodnego z poniższym schematem:</p>
+
+<pre>
+http://flickr.com/photo.gne?id=&lt;photo_id&gt;
+</pre>
+
+<p>Są inne użyteczne adresy URL tego typu:</p>
+
+<ul>
+<li>pobierz informacje o zdjęciach użytkownika w formacie RSS:
+<code>http://www.flickr.com/services/feeds/photos_public.gne?id=&lt;user_NSID>&amp;format=rss_200</code>
+</li>
+
+<li>
+jw. tylko pobierz zdjęcia z grupy o podanym NSID:
+<code>http://www.flickr.com/groups_feed.gne?id=&lt;group_NSID>&amp;format=rss_200</code>
+</li>
+
+<li>
+jw. tylko pobierz zdjęcia oznaczone określonym <em>tagiem</em>:
+<code>http://www.flickr.com/services/feeds/photos_public.gne?tags=&lt;tag>&amp;format=rss_200</code>
+</li>
+
+<li>
+wyślij list do użytkownika (za pomocą formularza):
+<code>http://www.flickr.com/messages_write.gne?to=&lt;user_NSID></code>
+</li>
+</ul>
+
+<h3>Pobierz</h3>
+
+<p>Omawiane skrypty są <a href="./scripts">tutaj</a>.
+Plik README zawiera wskazówki odnośnie instalacji.
+Opis wcześniejszej wersji skryptów oraz trybu <code>My-flickr-upld</code>
+jest <a href='./opis.html'>tutaj</a>.</p>
+
+<p>Punktem wyjścia w przypadku skryptów perlowych był moduły 
+<a href="http://search.cpan.org/~cpb/Flickr-Upload/">Flickr-Upload-1.22</a>
+i <a href="http://search.cpan.org/~iamcal/Flickr-API/">Flickr-API-0.08</a>.
+Biblioteka <code>My-flickr-upld.el</code> wykorzystuje
+<code>image-file.el</code> oraz fragmenty i idee
+z <code>show-images.el</code> Normana Walsha (jest częścią pakietu <a
+href="http://sourceforge.net/projects/jpegrdf">jpegrdf</a>).
+</p>
+
+<!-- ;;; -->
+
+<p>
+<a href="../../Proj.html#perl"><img
+ longdesc="[[back.png" src="/icons_/back.png" alt="Powrót"/>Powrót</a>
+</p>
+
+</body>
+</html>
+<!--
+Local variables:
+ mode: nxml
+ time-stamp-start:"name='DC.date' content='"
+ time-stamp-end:"'/>"
+ time-stamp-line-limit:0
+ LocalWords: Przechlewski geotagowanie GPS tagi geotagi Emacs preprocesora
+ LocalWords: GPSLongitudeRef GPSLatitudeRef GPSLatitude GPSLongitude GPSAreaInformation
+ ispell-local-dictionary: "polish"
+End:
+-->

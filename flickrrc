@@ -1,0 +1,12 @@
+# my config at $HOME/.flickr/flickrrc
+my_flickr_id=0000000000000000
+my_flickr_name=hr.icio
+auth_token=00000000000000000000
+#
+api_key=0000000000000000000000000
+shared_secret=0000000000000000000000
+#
+is_public=1
+is_friend=1
+is_family=1
+

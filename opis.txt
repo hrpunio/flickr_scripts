@@ -1,0 +1,67 @@
+=== aktualizacja 13-11-2006 ===
+=== (c) TP ====================
+flickr_getlastphoto.pl -- Hack #38: The program takes a username, 
+   converts it into a user_id, and then uses that user_id to look up 
+   the most recent photo in the user's stream, 
+   using flickr.people.getPublicPhotos.
+
+flickr_getuser.pl -- Hack #38: converting a username into a Flickr user ID.
+
+flickr_getlocation.pl -- get latitude/longitude/accuracy for photo_id
+
+flickr_get_photolist.pl --  Hack #33 (chapter 5): Get list of public 
+   photos with 'flickr.people.getPublicPhotos
+
+flickr_getsnaps.pl -- Hack #34: grab tagged photos and put small 
+   thumbnails into a named folder
+
+flickr_gettags.pl -- get tags from flickr for single photo, print them using ISO-8859-2
+   flickr_getTags [-u userid] -p photoid [-a]
+
+flickr_setgeoloc.pl -- dodanie do obrazka informacji geograficznych
+   flickr_setgeloc.pl -p id_obrazka -g d³ug:szer -l nazwa-miejsca
+
+flickr_settag.pl -- dodanie do obrazka listy tagów
+   flickr_settag.pl -p id_obrazka -t lista-tagów
+
+flickr_testlogin.pl -- wykonuje 'flickr.test.login'
+
+flickr_test.pl -- wykonuje 'flickr.test.echo'
+
+flickr_setGT.pl -- skrypt testowy
+
+flickr_upload -- oryginalny program do za³adowania obrazków na flickr.com
+
+flickr_xpload.pl  -- wersja rozszerzona flickr_upload
+
+flupload -- moja nak³adka na flickr_upload
+
+login2flickr.rc -- procedura autoryzacji (do³±czana do skryptów)
+
+flickr_utils.rc -- procedury wykorzystywane w skryptach
+
+flickr_getsets.pl flickr_getsetsinfo.pl -- zwraca info nt. zbiorów zdjêæ
+   u¿ytkownika (pierwsza pobiera z flickr.com i zapisuje lokalnie;
+   druga przegl±da zbiór lokalny)
+
+flickr_getalltags.pl  -- pobiera z flickr.com i zapisuje info nt. tagów 
+   u¿ytkownika 
+
+flickr_repTags.pl -- zamienia tag1 => tag2, przy czym tagi do wymiany s±
+   zadeklarowane w pliku konfiguracyjnym. Przydatne do porz±dkowania tagów
+
+flickr_photo_gsearch.pl -- wyszukuje zdjêcia na podstawie podanych tagów
+   zapisuje do pliku w formacie GPX (tylko zdjêcia oznakowane wspó³rzêdnymi)
+==========================================================
+
+Jak za³adowaæ pliki na www.flickr.com
+
+1. W emacsie wybierz z Menu <My> albo flickr-dir-init albo
+   flickr-dir edit; Dodaj opisy obrazków; zapisz bufor
+
+2. Plik powsta³y w kroku (1) przetwórz skryptem flick2flickr.pl:
+   flick2flickr  flickr-list.dir > plik1.sh
+
+3. Przetwórz plik powsta³y w kroku (2): sh plik1.sh > plik2.sh
+
+4. Uruchom plik2.sh: sh plik2.sh

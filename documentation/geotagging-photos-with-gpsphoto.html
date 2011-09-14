@@ -1,0 +1,315 @@
+<?xml version='1.0' encoding='iso-8859-2'?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+   "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+ <meta http-equiv="content-type" content="text/html; charset=iso-8859-2"/>
+ <meta name="DC.creator" content="Tomasz Przechlewski" />
+ <meta name='DC.date' content='2010-06-16T07:53:58CEST'/>
+ <meta name='DC.rights' content='(c) Tomasz Przechlewski'/>
+
+<!-- default styles: --> 
+<link rel="stylesheet" type="text/css" href="/style/tp-base.css" title='ES'/>
+<link rel="alternate stylesheet" type="text/css" href="/style/tp-bw.css" title='NS'/>
+<link rel="alternate stylesheet" type="text/css" href="/style/tp-big.css" title='BS'/>
+<!-- script -->
+<script type="text/javascript" src="/script/tp.js"></script>
+ 
+
+<title>Geotagowanie zdjęć z gspPhoto</title>
+</head>
+<body xml:lang="pl">
+
+<h2 class='main'>Geotagowanie zdjęć z gspPhoto
+<a class='flushright' href="./geotagging-photos-with-gpsphoto_en.html">
+ <img longdesc="[[uk-f.gif" src="/icons_/uk-f.gif" alt="UK"/></a>
+</h2>
+
+<h3>Streszczenie</h3>
+
+<p>
+Ten dokument opisuje jak dodać tagi EXIF zawierające
+współrzędne geograficzne do zdjęć zrobionych 
+aparatem cyfrowym wykorzystując ślad pobrany z odbiornika GPS
+i skrypt Perlowy
+<a href='http://www.carto.net/projects/photoTools/gpsPhoto/'>GPSphoto</a>.
+</p>
+
+<h3>Sposób postępowania</h3>
+
+<p>W celu precyzyjnej synchronizacji zegarów obu urządzeń na początku
+wycieczki zrobić zdjęcie odbiornika GPS z wyświetlonym na ekranie
+czasem.
+</p>
+
+<p>Zgrać zdjęcia do jakiegoś katalogu. Zgrać ślad z GPS, np. posługując
+się skryptem wykorzystującym program gpsBabel:
+</p>
+
+<pre>
+#!/bin/bash
+# Get Data from Garmin GPS Receiver ... 
+#
+TODAY=`date +"%Y%m%d"`
+gpsbabel -t -r -w -i garmin -f /dev/ttyS0 -o gpx -F "$TODAY.gpx"
+</pre>
+
+<p>Po zapisaniu śladu do pliku GPX ustalić różnicę czasu pomiędzy
+zegarami w obu urządzeniach. Przykładowo w moim Geko 301 wyświetlany
+jest czas lokalny a zapisywany czas GMT.  Dodatkowo jest pewna różnica
+wynikająca z niezbyt precyzyjnego zegara w aparacie i/lub
+przybliżonego zgrania czasu w obu urządzeniach. W celu zgrania czasu
+należy ustalić taką liczbę sekund (<em>time_offset</em>) aby:
+</p>
+
+<p style='text-align: center ; font-style : italic'>
+czas_kamery - time_offset = czas_GMT
+</p>
+
+<p>Przesunięcie <em>time_offset</em> wyznaczamy w sekundach, bo w takich
+jednostkach należy je podać uruchamiając skrypt gpsBabel. Zadanie uławia
+skrypt <a href="/prog/scripts/flickr/scripts/exif_datetime.pl">exif_datetime.pl</a>:
+</p>
+
+<pre>
+exif_datetime.pl  -f dscf2452.jpg -b 11:56:23
+</pre>
+
+<p>Gdzie: <code>dscf2452.jpg</code> to zdjęcie ekranu z wyświetlonym
+czasem; <code>11:56:23</code> to czas wyświetlony na ekranie.  Skrypt
+<code>exif_datetime.pl</code> porównuje ten czas z czasem określającym moment, w którym wykonano zdjęcie
+zapisanym w odpowiednim polu EXIF. Wypisuje różnicę w sekundach.
+</p>
+
+<p>
+<strong>Uwaga</strong>: Ponieważ na ekranie widzimy czas lokalny
+należy jeszcze go uwzględnić różnice między tym czasem a czasem GMT.
+Przykładowo, odjąć 3600 sekund, jeżeli między obu czasami jest
+godzina różnicy.
+Skrypt <code>exif_datetime.pl</code> można wywołać z trzecim
+parametrem określającym różnicę (w sekundach) 
+pomiędzy czasem wyświetlanym a czasem GMT.
+Jeżeli nie podano trzeciego parametru od czasu wyświetlanego na ekranie 
+GPSa odejmowane jest 3600 sekund.
+</p>
+
+<div style='float : right'>
+ <a href='http://www.flickr.com/tprzechlewski/2152603178/'>
+ <img  width='180px' alt='[Time sync]'
+   src='http://static.flickr.com/2281/2152603178_122f07a0c3_m.jpg'/>
+ </a>
+</div>
+
+<p>Przykładowo rysunek obok przedstawia hipotetyczną sytuację, 
+w której na ekranie
+widzimy, że zdjęcie wykonano 29 grudnia 2007 roku o godzinie 11:56:23. 
+Załóżmy ponadto, że ten czas 
+został zapisany przez GPSa jako 10:56:23 (zwróćmy wagę na pozycję: 
+<em>UTC offset</em>, która ma wartość +01:00).
+Z kolei 
+aparat <a href='http://www.flickr.com/photo_exif.gne?id=2152603178'>zarejestrował</a>, 
+że zdjęcie wykonano o godzinie 11:55:39.
+Po uruchomieniu skryptu w sposób podany wyżej
+na ekranie pojawi się kilka wierszy wydruku, ostatni z nich zawiera 
+wynik, np.:
+</p>
+
+<pre>
+dscf2452.jpg 2007:12:29 11:55:39 -3556
+</pre>
+
+<p>Liczba <em>-3556</em> jest szukanym przesunięciem.</p>
+
+<div class='uwaga'>
+<p><strong>Uwaga:</strong>
+ponieważ uruchamianie <code>exif_datetime</code> 
+w ww. sposób dla każdej sesji zdjęciowej
+jest pracochłonne, to skrypt zapisuje obliczone 
+przesunięcia w pliku <code>~/.time_offset</code>.
+Wpisanie po prostu:
+</p>
+<pre>
+exif_datetime 
+</pre>
+<p>
+wyświetli przesunięcia czasowe z pliku <code>~/.time_offset</code>. Ponieważ
+czas w aparatach rozsynchronizowuje się w miarę 
+wolno, wystarczy co kilka tygodni aktualizować <code>~/.time_offset</code>.
+</p>
+<p>
+Skrypt <code>exif_datetime</code> jest na tyle cwany,
+że zapisuje w <code>~/.time_offset</code>
+przesunięcia dla każdego aparatu oddzielnie. Dokładnie mówiąc dla każdego
+<em>typu aparatu</em> oddzielnie (pobiera zawartość pola <code>Model</code> ze zdjęcia). 
+</p>
+
+</div>
+
+<p>Teraz można uruchomić skrypt <code>gpsPhoto.pl</code>:</p>
+
+<pre>
+perl gpsPhoto.pl --dir=jpgs --gpsfile=20071229.gpx --timeoffset=-3556 \
+  --overwrite-geotagged --kml 20071228.kml
+</pre>
+
+<p>Proponuję dla bezpieczeństwa zawsze 
+dodawać opcję <code>--overwrite-geotagged</code>, bo
+inaczej raz geo-oznakowane zdjęcia nie są domyślnie brane pod uwagę. Jak się
+na przykład pomylimy i uruchomimy <code>gpsPhoto.pl</code> 
+raz jeszcze, to możemy otrzymać dziwne wyniki.
+Argument <code>--kml 20071229.kml</code> powoduje 
+wygenerowanie pliki w formacie KML (GoogleEarth). 
+Zamiast wywoływać <code>gpsPhoto.pl</code> bezpośrednio można uruchomić skrypt
+basha pn. <code>My-photo-sync</code>:
+</p>
+
+<pre>
+My-Photo-sync -d katalog -f plik.gpx -t time-offset
+</pre>
+
+<p>
+<strong>W tym momencie zdjęcia w katalogu są oznaczone 
+współrzędnymi geograficznymi.</strong>
+Oczywiście, tylko te, dla których nastąpiła synchronizacja czasu
+a ślad się nie urwał, bo przykładowo robiliśmy zdjęcie w tunelu
+św. Bernarda.
+</p>
+
+<div class='uwaga'>
+<p><strong>Uwaga:</strong> można też napisać:</p>
+<pre>
+My-photo-sync.sh -d katalog-zdjęć -f plik.gpx -a
+</pre>
+<p>
+Przesunięcie zostanie pobrane automatycznie 
+z pliku <code>~/.time_offset</code>. [Nie trzeba
+uruchamiać <code>exif_datetime </code>.]
+</p>
+</div>
+
+<h3>Publikowanie plików KML i/lub GPX</h3>
+
+<p>
+Ten punkt jest luźno związany z tematem i dotyczy publikowania plików
+KML i/lub GML z zaznaczonymi zdjęciami przy założeniu, że pliki ze
+zdjęciami znajdują się na flickr.com. 
+Jeżeli nie jesteś użytkownikiem flickr.com, to prawdopodobnie możesze pominąć ten punkt.
+</p>
+
+<p>Plik KML wygenerowany przez <code>gpsPhoto.pl</code> w opisany wyżej sposób zawiera
+wpisy dotyczące każdego zdjęcie w postaci elementów <code>&lt;Placemark></code>
+o strukturze podanej na poniższym przykładzie:
+</p>
+
+<pre>
+    &lt;Placemark>
+      &lt;name>dscf2456.jpg&lt;/name>
+      &lt;description>&lt;![CDATA[&lt;a href="/usr/local/share/Images/2007/12/29/dscf2456.jpg">&lt;img 
+          src="/usr/local/share/Images/2007/12/29/dscf2456.jpg" 
+          width="200" />&lt;/a>&lt;br>&lt;a 
+          href="/usr/local/share/Images/2007/12/29/dscf2456.jpg">full size&lt;/a>]]&gt;&lt;/description>
+      &lt;Snippet/>
+      &lt;LookAt>
+        &lt;longitude>18.551144600&lt;/longitude>
+        &lt;latitude>54.449744225&lt;/latitude>
+        &lt;range>10000&lt;/range>
+        &lt;tilt>50&lt;/tilt>
+        &lt;heading>0&lt;/heading>
+      &lt;/LookAt>
+      &lt;styleUrl>#Photo&lt;/styleUrl>
+      &lt;Point>
+        &lt;altitudeMode>clampToGround&lt;/altitudeMode>
+        &lt;coordinates>18.551144600,54.449744225,39&lt;/coordinates>
+      &lt;/Point>
+    &lt;/Placemark>
+</pre>
+
+<p>
+Plik taki można oglądać na swoim komputerze, ale jego opublikowanie
+w Internecie wymaga poprawienia zawartości atrybutów
+<code>href</code>. Skrypt <code></code> poprawia plik, tak aby element
+<code>a</code> wskazywał  na stronę główną ze zdjęciem na flickr.com
+a miniatura zdjęcia była pobierana także ze strony flickr.com ale jako
+plik w rozmiarze thumbnail, tj. 75x100 pikseli.
+</p>
+
+<pre>
+kml-adjust-photo-url.sh 20071229.kml
+</pre>
+
+<p>Zadanie o tyle nie jest trywialne, że URLe plików na flickr.com mają dziwną 
+postać. W skrócie (<a href='/wblog/gps_babel_etc.html'>tutaj</a> jest więcej):
+odsyłacze do zdjęć na flickr.com są tworzone według ustalonego schematu.
+Strona główna zdjęcia ma adres <code>http://www.flickr.com/photos/&lt;nazwa_użytkownika>/&lt;photo_id>/</code>, gdzie
+<code>&lt;photo_id></code> oznacza identyfikator zdjęcia. 
+Plik ze zdjęciem ma zaś następujący URL:
+<code>http://static.flickr.com/&lt;server>/&lt;photo_id>_&lt;secret>_&lt;size>.jpg</code>
+przy czym wartości <code>&lt;server></code> oraz <code>&lt;secret></code> można ustalić,
+np. poprzez wykonanie metody <code>flickr.people.getPublicPhotos</code>.
+Wartościami <code>&lt;size></code> są <code>s</code>, <code>t</code> , <code>m</code>, <code>b</code> 
+oraz <code>o</code>.
+</p>
+
+<p>Skrypt
+<code>flickr_getphotolist.pl</code>
+pobiera informacje nt. wszystkich zdjęć publicznych i zapisuje ją lokalnie na dysku
+w pliku <code>~/.flickr/hr.icio.ph</code>.
+</p>
+
+<p>Skrypt <code>flickr_photo_urls tytuł-zdjęcia</code> wypisuje
+wszystkie URLe do plików dla zdjęcia o podanym tytule. Żeby działał,
+zdjęcia muszą być oczywiście na flickr.com. No i wreszcie skrypt
+<code>kml-adjust-urls</code> poprawia linki:
+</p>
+
+<pre>
+kml-adjust-urls 20071229.kml > 20071229_ok.kml
+</pre>
+
+<p>które teraz wyglądają jak na poniższym przykładzie:</p>
+
+<pre>
+&lt;Placemark>
+ &lt;name>dscf2456.jpg&lt;/name>
+ &lt;description>&lt;![CDATA[&lt;a 
+   href="http://www.flickr.com/tprzechlewski/2151818571/">&lt;img 
+   src="http://static.flickr.com/2261/2151818571_ee436beee6_m.jpg" 
+   width="200" />&lt;/a>&lt;br>&lt;a 
+   href="http://www.flickr.com/tprzechlewski/2151818571/">full size&lt;/a>
+]]&gt;&lt;/description>
+      &lt;Snippet>&lt;/Snippet>
+&lt;!-- ... itd ... -->
+</pre>
+
+<p>Ponadto skrypt generuje listę (do pliku <code>20071229.wpts</code>)
+elementów <code>wpt</code> w takim formacie, że na google maps
+po kliknięciu w pinezkę, pokazuje się miniatura 
+zdjęcia (Por. <a href='/Geo/trasa.php?trasa=20071229'>przykład</a>).
+</p>
+
+<h3>Pobierz</h3>
+
+<p>Omawiane skrypty są <a href="./scripts">tutaj</a>.</p>
+
+
+<!-- ;;; -->
+
+<p>
+<a href="./opis_new.html"><img
+ longdesc="[[back.png" src="/icons_/back.png" alt="Powrót"/>Powrót</a>
+</p>
+
+</body>
+</html>
+<!--
+Local variables:
+ mode: nxml
+ time-stamp-start:"name='DC.date' content='"
+ time-stamp-end:"'/>"
+ time-stamp-line-limit:0
+ LocalWords: Przechlewski geotagowanie GPS tagi geotagi Emacs preprocesora
+ LocalWords: GPSLongitudeRef GPSLatitudeRef GPSLatitude GPSLongitude GPSAreaInformation
+ ispell-local-dictionary: "polish"
+End:
+-->

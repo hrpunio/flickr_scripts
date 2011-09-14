@@ -1,0 +1,2 @@
+all:
+	perl flickr_photo_gsearch.pl -t kaplica > kaplice.xml

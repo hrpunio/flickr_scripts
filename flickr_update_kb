@@ -1,0 +1,15 @@
+#!/bin/bash
+# dodane cd ~/.flickr && make check na okoliczno¶æ b³êdnych
+# plików konfiguracyjnych ** siê zdarzy³o ** by³ problem z kodowaniem
+#
+SITEDIR="/usr/local/lib/perl5/site_perl/"
+perl $SITEDIR/flickr_getphotolist.pl -u hr.icio
+
+echo "Refreshing information on tags/sets/geolocs"
+
+flickr_getsets && flickr_getalltags && flickr_getgroups && \
+flickr_xml2el > ~/.flickr/hr.icio.el && \
+cd ~/.knows &&  make 2flicker && \
+cd ~/.flickr && make check 
+
+echo "Done!"
