@@ -1,5 +1,6 @@
 #!/usr/bin/perl
-# kopiowanie pliku KML z usuniêciem elementów Placemark, zawieraj±cych zdjêcia których nie ma na flickr.com
+# kopiowanie pliku KML wygenerowanego skryptem gpsPhoto.pl (http://www.carto.net/projects/photoTools/gpsPhoto/)
+# z pominiêciem elementów Placemark, zawieraj±cych zdjêcia, których nie ma na flickr.com
 # zdjêcia s± identyfikowane przez nazwê pliku ze zdjêciem (tytu³ zdjêcia na flickr.com jest równy nazwie lokalnej)
 # skrypt dzia³a je¿eli tytu³y s± unikatowe
 #
@@ -17,17 +18,6 @@ my $parser = XML::LibXML->new;
 open my $fh, $file || die "problems...";
 
 $doc = $parser->parse_fh($fh);
-
-## http://www.perlmonks.org/?node_id=249394
-## for my $dead ($d->findnodes(q{/opt/node[val = "2"]})) {
-##   $dead->unbindNode; }
-## print $d->toString;
-
-## http://search.cpan.org/dist/XML-LibXML/lib/XML/LibXML/Node.pod
-
-## Nie dzia³a:
-#my $xpc = XML::LibXML::XPathContext->new;
-#$xpc->registerNs('gpx', 'http://www.topografix.com/GPX/1/0');
 
 for $n ( $doc->getElementsByLocalName('Placemark' ) ) {
   # Nie tylko zdjêcia s± wewn±trz 'Placemark'
@@ -79,12 +69,22 @@ print OUT $doc->toString();
 ## to samo ale w formacie GPX ####
 open WPS, ">$wpts_file_name" || die "Nie mogê otworzyæ $wpts_file_name ";
 
+my $wpts_as_string = ''; my $wpts_x_as_string = '';
+
 for $w (@Wpts) {
-   $pic_name = $w->[0]; $pic_lon = $w->[1]; $pic_lat = $w->[2]; $pic_url1 = $w->[3]; $pic_url2 = $w->[4];
-   print WPS "<wpt lat='$pic_lat' lon='$pic_lon'><ele/><name>$pic_name</name>\n" .
+   $pic_name = $w->[0];   $pic_lon = $w->[1];   $pic_lat = $w->[2];
+   $pic_url1 = $w->[3];   $pic_url2 = $w->[4];
+   $wpts_as_string .=  "<wpt lat='$pic_lat' lon='$pic_lon'><ele/><name>$pic_name</name>\n" .
+    "<extensions><html><![CDATA[<a href='$pic_url1' target='_blank'><img src='$pic_url2' /></a>]]>" .
+      "</html></extensions></wpt>\n";
+   ## Zapis alternatywny:
+   $wpts_x_as_string .=  "<wpt lat='$pic_lat' lon='$pic_lon'><ele/><name>$pic_name</name>\n" .
+     "<desc><![CDATA[<a href='$pic_url1' target='_blank'><img src='$pic_url2' />$pic_name</a>]]></desc>\n" .
     "<extensions><html><![CDATA[<a href='$pic_url1' target='_blank'><img src='$pic_url2' /></a>]]>" .
       "</html></extensions></wpt>\n";
 }
+
+print WPS "$wpts_as_string\n$wpts_x_as_string" ;
 
 printf "*** Znaleziono na flickr.com %d z %d zdjêæ\n", $all_photos - $missing_photos, $all_photos;
 
