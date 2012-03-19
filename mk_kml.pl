@@ -65,7 +65,7 @@ for $f ( $log->getElementsByTagName('file') ) {
 
     $PlaceMarks .= "<Placemark><name>$photo_name</name><description>" .
       "<![CDATA[<a href='http://www.flickr.com/tprzechlewski/$photo_id/' target='_blank'>" .
-      "<img src='$photo_src' />$photo_name</a>]]></description><Point><coordinates>$photo_lon,$photo_lat</coordinates></Point>\n";
+      "<img src='$photo_src' />$photo_name</a>]]></description><Point><coordinates>$photo_lon,$photo_lat</coordinates></Point></Placemark>\n";
 
   }
 
