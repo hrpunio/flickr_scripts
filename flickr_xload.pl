@@ -206,6 +206,7 @@ do {
       print LOG "<file name=\"$ori_photo_name\" id=\"$pid\"";
 
       if ( $geotagged ) { add_geo_tags($pid, $latitude, $longitude, $accuracy, $location) }
+      else { print LOG " geo=\"n\""; }
       if ( $setids )    { add_set_ids($pid, $setids);  }
       if ( $poolids )   { add_pool_ids($pid, $poolids); }
 
@@ -348,7 +349,7 @@ sub add_geo_tags {
     print "** Geocoordinates: [$lat $lon $loc $acc] set to $pid ...\n"; }
   else { print "** Error: geocoordinates not set [errcode = $response->{error_code}]\n"; }
 
-  print LOG " geo=\"y\"";
+  print LOG " geo=\"y\" lat=\"$lat\" lon=\"$lon\"";
   return ;
 }
 
